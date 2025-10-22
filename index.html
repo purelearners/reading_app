@@ -336,7 +336,7 @@ const level2Science = [
   "Matter has mass always",
   "Atoms make molecules together",
   "Elements are pure substances",
-  "Water is liquid form",
+  "Water is in liquid form",
   "Salt dissolves very easily",
   "Heat speeds chemical reactions",
   "Acids taste quite sour",
@@ -403,6 +403,91 @@ let recognition;
 let micAllowed = false;
 let recognitionActive = false;
 let mediaStream;
+
+// Levenshtein distance for fuzzy matching
+function levenshteinDistance(str1, str2) {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const matrix = [];
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      if (str1.charAt(i - 1) === str2.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[len1][len2];
+}
+
+// Calculate similarity percentage
+function calculateSimilarity(str1, str2) {
+  const distance = levenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
+  const maxLength = Math.max(str1.length, str2.length);
+  return ((maxLength - distance) / maxLength) * 100;
+}
+
+// Check if speech matches with tolerance for homophones
+function speechMatches(spoken, expected) {
+  const spokenClean = spoken.toLowerCase().replace(/[.,!?]/g, '').trim();
+  const expectedClean = expected.toLowerCase().replace(/[.,!?]/g, '').trim();
+  
+  // Exact match
+  if (spokenClean === expectedClean) {
+    return true;
+  }
+  
+  // Contains match
+  if (spokenClean.includes(expectedClean) || expectedClean.includes(spokenClean)) {
+    return true;
+  }
+  
+  // Word-by-word comparison with fuzzy matching
+  const spokenWords = spokenClean.split(/\s+/);
+  const expectedWords = expectedClean.split(/\s+/);
+  
+  // If word count is similar (within 1 word difference)
+  if (Math.abs(spokenWords.length - expectedWords.length) <= 1) {
+    let matchCount = 0;
+    for (let expectedWord of expectedWords) {
+      for (let spokenWord of spokenWords) {
+        const similarity = calculateSimilarity(spokenWord, expectedWord);
+        if (similarity >= 80) { // 80% similarity threshold
+          matchCount++;
+          break;
+        }
+      }
+    }
+    
+    // If at least 80% of words match
+    if (matchCount / expectedWords.length >= 0.8) {
+      return true;
+    }
+  }
+  
+  // Overall similarity check
+  const overallSimilarity = calculateSimilarity(spokenClean, expectedClean);
+  if (overallSimilarity >= 75) { // 75% overall similarity
+    return true;
+  }
+  
+  return false;
+}
 
 function getRandomSentences(level, count) {
   const levelData = allLevels[level];
@@ -486,8 +571,6 @@ function initializeSpeechRecognition() {
     speakBtn.textContent = 'Speak';
 
     const spoken = event.results[0][0].transcript;
-    const processedSpoken = spoken.replace(/[.,!?]/g, '').toLowerCase();
-    const sentenceToCheck = currentSentence.toLowerCase();
 
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
@@ -496,7 +579,8 @@ function initializeSpeechRecognition() {
     spokenSentenceBox.classList.add('active');
     spokenText.textContent = spoken;
     
-    if (processedSpoken.includes(sentenceToCheck)) {
+    // Use fuzzy matching for speech comparison
+    if (speechMatches(spoken, currentSentence)) {
       result.textContent = 'Correct!';
       totalScore++;
       levelScore++;
@@ -648,7 +732,6 @@ function showJumbleActivity(words) {
 
   startJumbleTimer();
   
-  // Scroll to top of page
   window.scrollTo(0, 0);
 }
 
