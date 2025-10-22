@@ -92,7 +92,7 @@
     transition: background-color 0.3s;
     box-shadow: 0 4px 6px -1px rgba(52,152,219,0.6);
   }
-  .playback-button:hover {
+  .playback-button:hover:not(:disabled) {
     background: #2980b9;
   }
   .playback-button:disabled {
@@ -164,50 +164,13 @@
     display: none;
     margin-top: 20px;
     text-align: center;
-  }
-  #jumbleContentWrapper {
-    display: block;
-  }
-  #jumbleContentWrapper.hidden {
-    display: none;
-  }
-  #jumbledWords, #assembledWords {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 10px;
-    min-height: 60px;
-    min-width: 300px;
-    border: 2px dashed #6ab04c;
-    border-radius: 12px;
-    margin: 10px auto;
-    max-width: 700px;
-    background: #ffffff;
-  }
-  .word {
-    background: #81c784;
-    margin: 6px;
-    padding: 10px 15px;
-    border-radius: 15px;
-    cursor: grab;
-    user-select: none;
-    font-size: 18px;
-    color: white;
-    box-shadow: 0 3px 6px #66bb6a;
-    transition: background-color 0.3s;
-  }
-  .word.dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-  }
-  #assembledWords .word {
-    background: #4caf50;
-    cursor: grab;
+    width: 100%;
   }
   #instructions {
     font-size: 16px;
     color: #34495e;
     margin-top: 10px;
+    margin-bottom: 20px;
     font-weight: 600;
   }
   .container-label {
@@ -215,6 +178,82 @@
     font-weight: 700;
     color: #34495e;
     margin-bottom: 5px;
+  }
+  #jumbleContentWrapper {
+    display: block;
+    width: 100%;
+  }
+  #jumbleContentWrapper.hidden {
+    display: none;
+  }
+  #jumbledWords {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 15px;
+    min-height: 80px;
+    min-width: 300px;
+    border: 2px solid #6ab04c;
+    border-radius: 12px;
+    margin: 15px auto;
+    max-width: 700px;
+    background: #f0f8f5;
+    gap: 10px;
+  }
+  #assembledWords {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 15px;
+    min-height: 80px;
+    min-width: 300px;
+    border: 3px dashed #27ae60;
+    border-radius: 12px;
+    margin: 15px auto;
+    max-width: 700px;
+    background: #ffffff;
+    gap: 10px;
+  }
+  .word {
+    background: #81c784;
+    padding: 12px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 18px;
+    color: white;
+    box-shadow: 0 3px 6px #66bb6a;
+    transition: all 0.3s;
+    font-weight: 600;
+  }
+  .word:hover {
+    background: #66bb6a;
+    transform: scale(1.05);
+  }
+  .word.selected {
+    background: #ff9800;
+    box-shadow: 0 3px 6px #ffb74d;
+  }
+  #correctSentenceBox {
+    border: 3px solid #27ae60;
+    background: #d5f4e6;
+    padding: 20px 20px;
+    border-radius: 12px;
+    width: 70%;
+    max-width: 700px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 22px;
+    color: #27ae60;
+    margin: 20px auto;
+    min-height: 60px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #correctSentenceBox.active {
+    display: flex;
   }
   #jumbleTimer {
     font-size: 18px;
@@ -235,7 +274,7 @@
 <div id="spokenSentenceBox">
   <div>You said: <strong id="spokenText"></strong></div>
   <div id="playbackContainer">
-    <button class="playback-button" id="playbackBtn" title="Play Recording">▶</button>
+    <button class="playback-button" id="playbackBtn" title="Play Recording" disabled>▶</button>
   </div>
 </div>
 
@@ -259,17 +298,20 @@
 
 <div id="jumbleContainer">
   <div id="jumbleContentWrapper">
-    <div id="instructions">Arrange the words in the correct order by dragging them. You can drag words back if needed.</div>
+    <div id="instructions">Click on words to arrange them in the correct order!</div>
     <div class="container-label">Jumbled Words:</div>
     <div id="jumbledWords"></div>
     <div class="container-label">Your Answer:</div>
     <div id="assembledWords"></div>
+    <div id="jumbleTimer"></div>
   </div>
-  <div id="jumbleTimer"></div>
+</div>
+
+<div id="correctSentenceBox">
+  <strong id="correctSentenceText"></strong>
 </div>
 
 <script>
-// Level 1: Proverbs & Values (3-word sentences)
 const level1Proverbs = [
   "Honesty brings trust",
   "Kindness spreads joy",
@@ -280,70 +322,9 @@ const level1Proverbs = [
   "Truth wins always",
   "Forgive and grow",
   "Help others often",
-  "Be a helper",
-  "Practice makes perfect",
-  "Mistakes teach lessons",
-  "Learn from failure",
-  "Curiosity sparks learning",
-  "Questions lead answers",
-  "Reading grows minds",
-  "Think before speaking",
-  "Listen and learn",
-  "Try try again",
-  "Never stop learning",
-  "Believe in yourself",
-  "Bravery beats fear",
-  "Stand up strong",
-  "Face your fears",
-  "Be your best",
-  "Confidence builds success",
-  "Speak with courage",
-  "Keep moving forward",
-  "You are enough",
-  "Be fearlessly kind",
-  "Friends stick together",
-  "Teamwork builds dreams",
-  "Help your friends",
-  "Share the load",
-  "Laugh with friends",
-  "Apologize when wrong",
-  "Include everyone always",
-  "Be a buddy",
-  "Kindness creates friendships",
-  "Together is better",
-  "Time teaches everything",
-  "Wait your turn",
-  "Think things through",
-  "Slow down sometimes",
-  "Choose words wisely",
-  "Listen before speaking",
-  "Watch and learn",
-  "Dont rush decisions",
-  "Patience brings rewards",
-  "Wisdom grows quietly",
-  "Smile every day",
-  "Gratitude brings happiness",
-  "Joy is contagious",
-  "Appreciate small things",
-  "Count your blessings",
-  "Stay kind always",
-  "Choose happy thoughts",
-  "Laugh every day",
-  "Positivity spreads sunshine",
-  "Be joyfully thankful",
-  "Do your best",
-  "Finish your work",
-  "Clean your space",
-  "Take care daily",
-  "Be on time",
-  "Follow the rules",
-  "Think before acting",
-  "Own your actions",
-  "Keep promises always",
-  "Be a leader"
+  "Be a helper"
 ];
 
-// Level 2: Science (5-word sentences)
 const level2Science = [
   "Matter has mass always",
   "Atoms make molecules together",
@@ -354,61 +335,16 @@ const level2Science = [
   "Acids taste quite sour",
   "Bases feel very slippery",
   "Mixtures combine different substances",
-  "Air contains many gases",
-  "Force moves objects forward",
-  "Gravity pulls everything down",
-  "Light travels very fast",
-  "Sound needs a medium",
-  "Energy causes many changes",
-  "Friction slows down motion",
-  "Heat rises upward always",
-  "Magnets attract many metals",
-  "Mass affects gravitational pull",
-  "Motion needs applied force",
-  "Cells build all life",
-  "DNA carries genetic instructions",
-  "Organs work well together",
-  "Plants make their food",
-  "Animals need oxygen always",
-  "Muscles help body movement",
-  "Bones support entire body",
-  "Blood transports important nutrients",
-  "Eyes detect visible light",
-  "Brain controls entire body",
-  "Rocks form distinct layers",
-  "Volcanoes erupt hot lava",
-  "Earthquakes shake the ground",
-  "Clouds bring rain water",
-  "Wind moves the air",
-  "Soil grows many plants",
-  "Oceans hold salt water",
-  "Sun warms entire Earth",
-  "Moon reflects sun light",
-  "Stars shine very bright",
-  "Planets orbit the sun",
-  "Moon has many craters",
-  "Stars burn hot fuel",
-  "Comets fly through space",
-  "Telescopes show outer space",
-  "Gravity holds planets tight",
-  "Mars is colored red",
-  "Earth supports all life",
-  "Sun gives us energy",
-  "Space is very vast"
+  "Air contains many gases"
 ];
 
-// Level 3: Complex Science (6-10 word sentences)
 const level3Science = [
   "The water cycle demonstrates evaporation condensation and precipitation continuously",
   "Photosynthesis requires sunlight carbon dioxide water and chlorophyll molecules",
   "Newton first law states objects remain stationary until force applied",
   "Ecosystems depend on producers consumers and decomposers working together",
   "Climate change results from greenhouse gas emissions affecting temperature",
-  "DNA carries genetic information determining organism traits and characteristics",
-  "Plate tectonics causes earthquakes volcanoes and continental movement",
-  "Microorganisms bacteria viruses and fungi affect human health significantly",
-  "Renewable energy sources solar wind hydro reduce fossil fuel dependence",
-  "Blood circulation transports oxygen nutrients and waste products throughout body"
+  "DNA carries genetic information determining organism traits and characteristics"
 ];
 
 const allLevels = [
@@ -450,6 +386,8 @@ const jumbleContainer = document.getElementById('jumbleContainer');
 const jumbleContentWrapper = document.getElementById('jumbleContentWrapper');
 const jumbledWordsDiv = document.getElementById('jumbledWords');
 const assembledWordsDiv = document.getElementById('assembledWords');
+const correctSentenceBox = document.getElementById('correctSentenceBox');
+const correctSentenceText = document.getElementById('correctSentenceText');
 const scorePageContainer = document.getElementById('scorePageContainer');
 const levelScoreContent = document.getElementById('levelScoreContent');
 const buttons = document.getElementById('buttons');
@@ -457,6 +395,7 @@ const buttons = document.getElementById('buttons');
 let recognition;
 let micAllowed = false;
 let recognitionActive = false;
+let mediaStream;
 
 function getRandomSentences(level, count) {
   const levelData = allLevels[level];
@@ -490,6 +429,27 @@ function hideSentence() {
   sentenceBox.classList.remove('active');
 }
 
+function setupMediaRecorder() {
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      mediaStream = stream;
+      mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        playbackBtn.disabled = false;
+      };
+    })
+    .catch(err => {
+      console.error('Error accessing microphone:', err);
+      alert('Microphone access denied. Please allow microphone permissions.');
+    });
+}
+
 function initializeSpeechRecognition() {
   if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
     alert('Speech Recognition not supported in this browser.');
@@ -504,9 +464,14 @@ function initializeSpeechRecognition() {
 
   recog.onstart = () => {
     recognitionActive = true;
-    audioChunks = [];
     speakBtn.textContent = 'Stop Listening';
     result.textContent = 'Listening...';
+    audioChunks = [];
+    playbackBtn.disabled = true;
+    
+    if (mediaRecorder && mediaRecorder.state === 'inactive') {
+      mediaRecorder.start();
+    }
   };
 
   recog.onresult = event => {
@@ -517,11 +482,13 @@ function initializeSpeechRecognition() {
     const processedSpoken = spoken.replace(/[.,!?]/g, '').toLowerCase();
     const sentenceToCheck = currentSentence.toLowerCase();
 
-    // Show what user said
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+
     spokenSentenceBox.classList.add('active');
     spokenText.textContent = spoken;
-    playbackBtn.disabled = false;
-
+    
     if (processedSpoken.includes(sentenceToCheck)) {
       result.textContent = 'Correct!';
       totalScore++;
@@ -529,17 +496,24 @@ function initializeSpeechRecognition() {
       speakBtn.style.display = 'none';
       repeatBtn.style.display = 'none';
       recallBtn.style.display = 'inline-block';
+      retryBtn.style.display = 'none';
     } else {
       result.textContent = 'Incorrect. Try again!';
       retryBtn.style.display = 'inline-block';
       speakBtn.style.display = 'none';
       repeatBtn.style.display = 'none';
+      recallBtn.style.display = 'none';
     }
   };
 
   recog.onerror = event => {
     recognitionActive = false;
     speakBtn.textContent = 'Speak';
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+    
     console.error('Speech Recognition error:', event.error);
     if (event.error === 'no-speech') {
       result.textContent = 'No speech detected. Try again!';
@@ -554,31 +528,18 @@ function initializeSpeechRecognition() {
   recog.onend = () => {
     recognitionActive = false;
     speakBtn.textContent = 'Speak';
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
   };
 
   return recog;
 }
 
-function initializeMediaRecorder() {
-  navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(stream => {
-      mediaRecorder = new MediaRecorder(stream);
-      
-      mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
-      };
-      
-      mediaRecorder.onstop = () => {
-        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-      };
-    })
-    .catch(err => {
-      console.error('Error accessing microphone:', err);
-    });
-}
-
 function startReadingPractice() {
   jumbleContainer.style.display = 'none';
+  correctSentenceBox.classList.remove('active');
   scorePageContainer.classList.remove('active');
   buttons.style.display = 'block';
   sentenceBox.style.display = 'flex';
@@ -599,10 +560,11 @@ function startReadingPractice() {
   restartBtn.style.display = 'none';
   speakBtn.style.display = 'inline-block';
   repeatBtn.style.display = 'inline-block';
+  playbackBtn.disabled = true;
 
   if (!micAllowed) {
+    setupMediaRecorder();
     recognition = initializeSpeechRecognition();
-    initializeMediaRecorder();
     if (recognition) {
       micAllowed = true;
     } else {
@@ -632,6 +594,7 @@ function showQuestion() {
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
   jumbleContainer.style.display = 'none';
+  correctSentenceBox.classList.remove('active');
   speakBtn.disabled = false;
   repeatBtn.disabled = false;
   speakBtn.textContent = 'Speak';
@@ -641,6 +604,7 @@ function showQuestion() {
   nextSentenceBtn.style.display = 'none';
   speakBtn.style.display = 'inline-block';
   repeatBtn.style.display = 'inline-block';
+  playbackBtn.disabled = true;
 }
 
 function showJumbleActivity(words) {
@@ -648,6 +612,7 @@ function showJumbleActivity(words) {
   spokenSentenceBox.classList.remove('active');
   jumbleContainer.style.display = 'block';
   jumbleContentWrapper.classList.remove('hidden');
+  correctSentenceBox.classList.remove('active');
   result.textContent = '';
   recallBtn.style.display = 'none';
   retryBtn.style.display = 'none';
@@ -666,22 +631,26 @@ function showJumbleActivity(words) {
     const wordElem = document.createElement('div');
     wordElem.textContent = word;
     wordElem.classList.add('word');
-    wordElem.draggable = true;
     wordElem.id = 'word-' + word + '-' + Math.random().toString(36).substr(2,5);
+    wordElem.dataset.word = word;
+    wordElem.onclick = () => moveWord(wordElem);
     jumbledWordsDiv.appendChild(wordElem);
-
-    wordElem.addEventListener('dragstart', dragStart);
-    wordElem.addEventListener('dragend', dragEnd);
   }
-
-  jumbledWordsDiv.addEventListener('dragover', dragOver);
-  jumbledWordsDiv.addEventListener('drop', dropWord);
-  assembledWordsDiv.addEventListener('dragover', dragOver);
-  assembledWordsDiv.addEventListener('drop', dropWord);
 
   assembledWordsDiv.dataset.correctSentence = words.join(' ');
 
   startJumbleTimer();
+}
+
+function moveWord(wordElem) {
+  const isInAssembled = assembledWordsDiv.contains(wordElem);
+  
+  if (isInAssembled) {
+    jumbledWordsDiv.appendChild(wordElem);
+  } else {
+    assembledWordsDiv.appendChild(wordElem);
+    checkSentenceCompletion();
+  }
 }
 
 function startJumbleTimer() {
@@ -701,31 +670,8 @@ function startJumbleTimer() {
   }, 1000);
 }
 
-function dragStart(e) {
-  e.dataTransfer.setData('text/plain', e.target.id);
-  e.target.classList.add('dragging');
-}
-
-function dragEnd(e) {
-  e.target.classList.remove('dragging');
-}
-
-function dragOver(e) {
-  e.preventDefault();
-}
-
-function dropWord(e) {
-  e.preventDefault();
-  const wordId = e.dataTransfer.getData('text/plain');
-  const wordElem = document.getElementById(wordId);
-  if (!wordElem) return;
-
-  e.currentTarget.appendChild(wordElem);
-  checkSentenceCompletion();
-}
-
 function checkSentenceCompletion() {
-  const assembledWords = [...assembledWordsDiv.children].map(w => w.textContent);
+  const assembledWords = [...assembledWordsDiv.children].map(w => w.dataset.word);
   const correctSentence = assembledWordsDiv.dataset.correctSentence.split(' ');
   
   if (assembledWords.length !== correctSentence.length) {
@@ -753,8 +699,9 @@ function checkSentenceCompletion() {
     }
     
     jumbleContentWrapper.classList.add('hidden');
+    correctSentenceBox.classList.add('active');
+    correctSentenceText.textContent = currentSentence;
     nextSentenceBtn.style.display = 'inline-block';
-    showSentenceBtn.style.display = 'inline-block';
   }
 }
 
@@ -763,6 +710,7 @@ function showScorePage() {
   sentenceBox.style.display = 'none';
   spokenSentenceBox.classList.remove('active');
   jumbleContainer.style.display = 'none';
+  correctSentenceBox.classList.remove('active');
   buttons.style.display = 'none';
   result.textContent = '';
   
@@ -795,12 +743,14 @@ speakBtn.onclick = () => {
     recognitionActive = false;
     speakBtn.textContent = 'Speak';
     result.textContent = '';
+    spokenSentenceBox.classList.remove('active');
+    playbackBtn.disabled = true;
     return;
   }
   
   try {
-    audioChunks = [];
     recognition.start();
+    playbackBtn.disabled = true;
   } catch (e) {
     console.error('Recognition start error:', e);
     result.textContent = 'Please wait and try again.';
@@ -821,6 +771,7 @@ retryBtn.onclick = () => {
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
   retryBtn.style.display = 'none';
+  playbackBtn.disabled = true;
   speakBtn.style.display = 'inline-block';
   repeatBtn.style.display = 'inline-block';
 };
@@ -835,7 +786,12 @@ playbackBtn.onclick = () => {
   if (audioBlob) {
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
-    audio.play();
+    audio.play().catch(err => {
+      console.error('Error playing audio:', err);
+      alert('Could not play audio. Please try again.');
+    });
+  } else {
+    alert('No audio recording available.');
   }
 };
 
@@ -843,11 +799,13 @@ nextSentenceBtn.onclick = () => {
   currentQuestion++;
   jumbleContainer.style.display = 'none';
   jumbleContentWrapper.classList.remove('hidden');
+  correctSentenceBox.classList.remove('active');
   showSentenceBtn.style.display = 'none';
   nextSentenceBtn.style.display = 'none';
   jumbleTimerDiv.textContent = '';
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
+  playbackBtn.disabled = true;
 
   if (currentQuestion >= 3) {
     showScorePage();
@@ -881,4 +839,3 @@ window.onload = () => {
 </script>
 </body>
 </html>
-
