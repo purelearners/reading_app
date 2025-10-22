@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reading Practice with Jumbled Words</title>
+<style>
+  body {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    background: #fcf8f3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    user-select: none;
+    min-height: 100vh;
+    margin: 0;
+  }
+  #levelDisplay {
+    font-size: 24px;
+    font-weight: 900;
+    color: #27ae60;
+    margin-bottom: 10px;
+  }
+  #sentenceBox {
+    border: 3px solid #6ab04c;
+    background: #d4efdf;
+    padding: 30px 20px;
+    border-radius: 12px;
+    width: 70%;
+    max-width: 700px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 28px;
+    color: #34495e;
+    margin-bottom: 15px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    min-height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #sentenceBox.active {
+    opacity: 1;
+    transform: scale(1);
+  }
+  #sentenceBox.hidden {
+    display: none;
+  }
+  #spokenSentenceBox {
+    border: 3px solid #3498db;
+    background: #d6eaf8;
+    padding: 20px 20px;
+    border-radius: 12px;
+    width: 70%;
+    max-width: 700px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 22px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    min-height: 80px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #spokenSentenceBox.active {
+    display: flex;
+  }
+  #playbackContainer {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .playback-button {
+    background: #3498db;
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    box-shadow: 0 4px 6px -1px rgba(52,152,219,0.6);
+  }
+  .playback-button:hover {
+    background: #2980b9;
+  }
+  .playback-button:disabled {
+    background: #95a5a6;
+    cursor: default;
+  }
+  #scorePageContainer {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    border: 3px solid #27ae60;
+    background: #d5f4e6;
+    border-radius: 15px;
+    max-width: 600px;
+  }
+  #scorePageContainer.active {
+    display: block;
+  }
+  .score-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: #27ae60;
+    margin-bottom: 20px;
+  }
+  .score-content {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 20px 0;
+  }
+  #buttons {
+    margin-bottom: 20px;
+  }
+  button {
+    font-size: 18px;
+    margin: 0 10px;
+    padding: 12px 25px;
+    border-radius: 10px;
+    border: none;
+    background: #6ab04c;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(106,176,76,0.6);
+    transition: background-color 0.3s;
+  }
+  button:hover:not(:disabled) {
+    background: #4a8e2f;
+  }
+  button:disabled {
+    background: #b5d6a1;
+    cursor: default;
+  }
+  #recallBtn, #showSentenceBtn, #nextSentenceBtn, #continueBtn, #restartBtn, #retryBtn {
+    display: none;
+    background: #3498db;
+    box-shadow: 0 4px 6px -1px rgba(52,152,219,0.6);
+  }
+  #recallBtn:hover:not(:disabled), #showSentenceBtn:hover:not(:disabled), #nextSentenceBtn:hover:not(:disabled), #continueBtn:hover:not(:disabled), #restartBtn:hover:not(:disabled), #retryBtn:hover:not(:disabled) {
+    background: #2980b9;
+  }
+  #result {
+    font-size: 20px;
+    font-weight: 700;
+    height: 28px;
+    margin-bottom: 10px;
+    color: #2c3e50;
+  }
+  #jumbleContainer {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+  }
+  #jumbleContentWrapper {
+    display: block;
+  }
+  #jumbleContentWrapper.hidden {
+    display: none;
+  }
+  #jumbledWords, #assembledWords {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+    min-height: 60px;
+    min-width: 300px;
+    border: 2px dashed #6ab04c;
+    border-radius: 12px;
+    margin: 10px auto;
+    max-width: 700px;
+    background: #ffffff;
+  }
+  .word {
+    background: #81c784;
+    margin: 6px;
+    padding: 10px 15px;
+    border-radius: 15px;
+    cursor: grab;
+    user-select: none;
+    font-size: 18px;
+    color: white;
+    box-shadow: 0 3px 6px #66bb6a;
+    transition: background-color 0.3s;
+  }
+  .word.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+  #assembledWords .word {
+    background: #4caf50;
+    cursor: grab;
+  }
+  #instructions {
+    font-size: 16px;
+    color: #34495e;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  .container-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #34495e;
+    margin-bottom: 5px;
+  }
+  #jumbleTimer {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e74c3c;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Reading Practice with Jumbled Words</h1>
+
+<div id="levelDisplay"></div>
+
+<div id="sentenceBox"></div>
+
+<div id="spokenSentenceBox">
+  <div>You said: <strong id="spokenText"></strong></div>
+  <div id="playbackContainer">
+    <button class="playback-button" id="playbackBtn" title="Play Recording">▶</button>
+  </div>
+</div>
+
+<div id="scorePageContainer">
+  <div class="score-title">Level Complete!</div>
+  <div class="score-content" id="levelScoreContent"></div>
+  <button id="continueBtn">Continue to Next Level</button>
+  <button id="restartBtn">Restart</button>
+</div>
+
+<div id="buttons">
+  <button id="repeatBtn">Repeat After Me</button>
+  <button id="speakBtn">Speak</button>
+  <button id="recallBtn">Recall It</button>
+  <button id="retryBtn">Retry</button>
+  <button id="showSentenceBtn">Show Sentence</button>
+  <button id="nextSentenceBtn">Next Question</button>
+</div>
+
+<div id="result"></div>
+
+<div id="jumbleContainer">
+  <div id="jumbleContentWrapper">
+    <div id="instructions">Arrange the words in the correct order by dragging them. You can drag words back if needed.</div>
+    <div class="container-label">Jumbled Words:</div>
+    <div id="jumbledWords"></div>
+    <div class="container-label">Your Answer:</div>
+    <div id="assembledWords"></div>
+  </div>
+  <div id="jumbleTimer"></div>
+</div>
+
+<script>
+// Level 1: Proverbs & Values (3-word sentences)
+const level1Proverbs = [
+  "Honesty brings trust",
+  "Kindness spreads joy",
+  "Respect earns respect",
+  "Sharing shows care",
+  "Patience brings peace",
+  "Manners matter always",
+  "Truth wins always",
+  "Forgive and grow",
+  "Help others often",
+  "Be a helper",
+  "Practice makes perfect",
+  "Mistakes teach lessons",
+  "Learn from failure",
+  "Curiosity sparks learning",
+  "Questions lead answers",
+  "Reading grows minds",
+  "Think before speaking",
+  "Listen and learn",
+  "Try try again",
+  "Never stop learning",
+  "Believe in yourself",
+  "Bravery beats fear",
+  "Stand up strong",
+  "Face your fears",
+  "Be your best",
+  "Confidence builds success",
+  "Speak with courage",
+  "Keep moving forward",
+  "You are enough",
+  "Be fearlessly kind",
+  "Friends stick together",
+  "Teamwork builds dreams",
+  "Help your friends",
+  "Share the load",
+  "Laugh with friends",
+  "Apologize when wrong",
+  "Include everyone always",
+  "Be a buddy",
+  "Kindness creates friendships",
+  "Together is better",
+  "Time teaches everything",
+  "Wait your turn",
+  "Think things through",
+  "Slow down sometimes",
+  "Choose words wisely",
+  "Listen before speaking",
+  "Watch and learn",
+  "Dont rush decisions",
+  "Patience brings rewards",
+  "Wisdom grows quietly",
+  "Smile every day",
+  "Gratitude brings happiness",
+  "Joy is contagious",
+  "Appreciate small things",
+  "Count your blessings",
+  "Stay kind always",
+  "Choose happy thoughts",
+  "Laugh every day",
+  "Positivity spreads sunshine",
+  "Be joyfully thankful",
+  "Do your best",
+  "Finish your work",
+  "Clean your space",
+  "Take care daily",
+  "Be on time",
+  "Follow the rules",
+  "Think before acting",
+  "Own your actions",
+  "Keep promises always",
+  "Be a leader"
+];
+
+// Level 2: Science (5-word sentences)
+const level2Science = [
+  "Matter has mass always",
+  "Atoms make molecules together",
+  "Elements are pure substances",
+  "Water is liquid form",
+  "Salt dissolves very easily",
+  "Heat speeds chemical reactions",
+  "Acids taste quite sour",
+  "Bases feel very slippery",
+  "Mixtures combine different substances",
+  "Air contains many gases",
+  "Force moves objects forward",
+  "Gravity pulls everything down",
+  "Light travels very fast",
+  "Sound needs a medium",
+  "Energy causes many changes",
+  "Friction slows down motion",
+  "Heat rises upward always",
+  "Magnets attract many metals",
+  "Mass affects gravitational pull",
+  "Motion needs applied force",
+  "Cells build all life",
+  "DNA carries genetic instructions",
+  "Organs work well together",
+  "Plants make their food",
+  "Animals need oxygen always",
+  "Muscles help body movement",
+  "Bones support entire body",
+  "Blood transports important nutrients",
+  "Eyes detect visible light",
+  "Brain controls entire body",
+  "Rocks form distinct layers",
+  "Volcanoes erupt hot lava",
+  "Earthquakes shake the ground",
+  "Clouds bring rain water",
+  "Wind moves the air",
+  "Soil grows many plants",
+  "Oceans hold salt water",
+  "Sun warms entire Earth",
+  "Moon reflects sun light",
+  "Stars shine very bright",
+  "Planets orbit the sun",
+  "Moon has many craters",
+  "Stars burn hot fuel",
+  "Comets fly through space",
+  "Telescopes show outer space",
+  "Gravity holds planets tight",
+  "Mars is colored red",
+  "Earth supports all life",
+  "Sun gives us energy",
+  "Space is very vast"
+];
+
+// Level 3: Complex Science (6-10 word sentences)
+const level3Science = [
+  "The water cycle demonstrates evaporation condensation and precipitation continuously",
+  "Photosynthesis requires sunlight carbon dioxide water and chlorophyll molecules",
+  "Newton first law states objects remain stationary until force applied",
+  "Ecosystems depend on producers consumers and decomposers working together",
+  "Climate change results from greenhouse gas emissions affecting temperature",
+  "DNA carries genetic information determining organism traits and characteristics",
+  "Plate tectonics causes earthquakes volcanoes and continental movement",
+  "Microorganisms bacteria viruses and fungi affect human health significantly",
+  "Renewable energy sources solar wind hydro reduce fossil fuel dependence",
+  "Blood circulation transports oxygen nutrients and waste products throughout body"
+];
+
+const allLevels = [
+  { name: "Level 1: Easy - Proverbs & Values", sentences: level1Proverbs, timerLimit: 10 },
+  { name: "Level 2: Medium - Science", sentences: level2Science, timerLimit: 15 },
+  { name: "Level 3: Hard - Complex Science", sentences: level3Science, timerLimit: 20 }
+];
+
+let currentLevel = 0;
+let currentQuestion = 0;
+let levelScore = 0;
+let totalScore = 0;
+let jumbleTimerInterval;
+let jumbleTimeLeft = 10;
+let jumbleTimerLimit = 10;
+let timeLimitExceeded = false;
+let currentSentence = '';
+let levelSentences = [];
+let mediaRecorder;
+let audioChunks = [];
+let audioBlob;
+
+const levelDisplay = document.getElementById('levelDisplay');
+const sentenceBox = document.getElementById('sentenceBox');
+const spokenSentenceBox = document.getElementById('spokenSentenceBox');
+const spokenText = document.getElementById('spokenText');
+const playbackBtn = document.getElementById('playbackBtn');
+const result = document.getElementById('result');
+const jumbleTimerDiv = document.getElementById('jumbleTimer');
+const repeatBtn = document.getElementById('repeatBtn');
+const speakBtn = document.getElementById('speakBtn');
+const recallBtn = document.getElementById('recallBtn');
+const retryBtn = document.getElementById('retryBtn');
+const showSentenceBtn = document.getElementById('showSentenceBtn');
+const nextSentenceBtn = document.getElementById('nextSentenceBtn');
+const continueBtn = document.getElementById('continueBtn');
+const restartBtn = document.getElementById('restartBtn');
+const jumbleContainer = document.getElementById('jumbleContainer');
+const jumbleContentWrapper = document.getElementById('jumbleContentWrapper');
+const jumbledWordsDiv = document.getElementById('jumbledWords');
+const assembledWordsDiv = document.getElementById('assembledWords');
+const scorePageContainer = document.getElementById('scorePageContainer');
+const levelScoreContent = document.getElementById('levelScoreContent');
+const buttons = document.getElementById('buttons');
+
+let recognition;
+let micAllowed = false;
+let recognitionActive = false;
+
+function getRandomSentences(level, count) {
+  const levelData = allLevels[level];
+  const sentences = [];
+  const availableIndices = [];
+  
+  for (let i = 0; i < levelData.sentences.length; i++) {
+    availableIndices.push(i);
+  }
+  
+  for (let i = 0; i < count; i++) {
+    const randomIdx = Math.floor(Math.random() * availableIndices.length);
+    const index = availableIndices[randomIdx];
+    sentences.push(levelData.sentences[index]);
+    availableIndices.splice(randomIdx, 1);
+  }
+  
+  return sentences;
+}
+
+function fadeInSentence(text) {
+  sentenceBox.classList.remove('active', 'hidden');
+  setTimeout(() => {
+    sentenceBox.textContent = text;
+    sentenceBox.classList.add('active');
+  }, 150);
+}
+
+function hideSentence() {
+  sentenceBox.classList.add('hidden');
+  sentenceBox.classList.remove('active');
+}
+
+function initializeSpeechRecognition() {
+  if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+    alert('Speech Recognition not supported in this browser.');
+    return null;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recog = new SpeechRecognition();
+  recog.lang = 'en-US';
+  recog.interimResults = false;
+  recog.maxAlternatives = 1;
+  recog.continuous = false;
+
+  recog.onstart = () => {
+    recognitionActive = true;
+    audioChunks = [];
+    speakBtn.textContent = 'Stop Listening';
+    result.textContent = 'Listening...';
+  };
+
+  recog.onresult = event => {
+    recognitionActive = false;
+    speakBtn.textContent = 'Speak';
+
+    const spoken = event.results[0][0].transcript;
+    const processedSpoken = spoken.replace(/[.,!?]/g, '').toLowerCase();
+    const sentenceToCheck = currentSentence.toLowerCase();
+
+    // Show what user said
+    spokenSentenceBox.classList.add('active');
+    spokenText.textContent = spoken;
+    playbackBtn.disabled = false;
+
+    if (processedSpoken.includes(sentenceToCheck)) {
+      result.textContent = 'Correct!';
+      totalScore++;
+      levelScore++;
+      speakBtn.style.display = 'none';
+      repeatBtn.style.display = 'none';
+      recallBtn.style.display = 'inline-block';
+    } else {
+      result.textContent = 'Incorrect. Try again!';
+      retryBtn.style.display = 'inline-block';
+      speakBtn.style.display = 'none';
+      repeatBtn.style.display = 'none';
+    }
+  };
+
+  recog.onerror = event => {
+    recognitionActive = false;
+    speakBtn.textContent = 'Speak';
+    console.error('Speech Recognition error:', event.error);
+    if (event.error === 'no-speech') {
+      result.textContent = 'No speech detected. Try again!';
+    } else if (event.error === 'not-allowed') {
+      alert('Microphone permission denied. Please allow microphone access.');
+      speakBtn.disabled = true;
+    } else {
+      result.textContent = 'Error: ' + event.error;
+    }
+  };
+
+  recog.onend = () => {
+    recognitionActive = false;
+    speakBtn.textContent = 'Speak';
+  };
+
+  return recog;
+}
+
+function initializeMediaRecorder() {
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      };
+    })
+    .catch(err => {
+      console.error('Error accessing microphone:', err);
+    });
+}
+
+function startReadingPractice() {
+  jumbleContainer.style.display = 'none';
+  scorePageContainer.classList.remove('active');
+  buttons.style.display = 'block';
+  sentenceBox.style.display = 'flex';
+  spokenSentenceBox.classList.remove('active');
+  result.textContent = '';
+  currentLevel = 0;
+  currentQuestion = 0;
+  levelScore = 0;
+  totalScore = 0;
+  speakBtn.disabled = false;
+  repeatBtn.disabled = false;
+  speakBtn.textContent = 'Speak';
+  recallBtn.style.display = 'none';
+  retryBtn.style.display = 'none';
+  showSentenceBtn.style.display = 'none';
+  nextSentenceBtn.style.display = 'none';
+  continueBtn.style.display = 'none';
+  restartBtn.style.display = 'none';
+  speakBtn.style.display = 'inline-block';
+  repeatBtn.style.display = 'inline-block';
+
+  if (!micAllowed) {
+    recognition = initializeSpeechRecognition();
+    initializeMediaRecorder();
+    if (recognition) {
+      micAllowed = true;
+    } else {
+      speakBtn.disabled = true;
+    }
+  }
+
+  showLevel();
+}
+
+function showLevel() {
+  const levelName = allLevels[currentLevel].name;
+  levelDisplay.textContent = `${levelName}`;
+  
+  levelSentences = getRandomSentences(currentLevel, 3);
+  currentQuestion = 0;
+  levelScore = 0;
+  
+  showQuestion();
+}
+
+function showQuestion() {
+  levelDisplay.textContent = `${allLevels[currentLevel].name} - Question ${currentQuestion + 1}/3`;
+  
+  currentSentence = levelSentences[currentQuestion];
+  fadeInSentence(currentSentence);
+  result.textContent = '';
+  spokenSentenceBox.classList.remove('active');
+  jumbleContainer.style.display = 'none';
+  speakBtn.disabled = false;
+  repeatBtn.disabled = false;
+  speakBtn.textContent = 'Speak';
+  recallBtn.style.display = 'none';
+  retryBtn.style.display = 'none';
+  showSentenceBtn.style.display = 'none';
+  nextSentenceBtn.style.display = 'none';
+  speakBtn.style.display = 'inline-block';
+  repeatBtn.style.display = 'inline-block';
+}
+
+function showJumbleActivity(words) {
+  hideSentence();
+  spokenSentenceBox.classList.remove('active');
+  jumbleContainer.style.display = 'block';
+  jumbleContentWrapper.classList.remove('hidden');
+  result.textContent = '';
+  recallBtn.style.display = 'none';
+  retryBtn.style.display = 'none';
+  showSentenceBtn.style.display = 'none';
+  nextSentenceBtn.style.display = 'none';
+  timeLimitExceeded = false;
+
+  jumbleTimerLimit = allLevels[currentLevel].timerLimit;
+
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
+
+  jumbledWordsDiv.innerHTML = '';
+  assembledWordsDiv.innerHTML = '';
+
+  for (const word of shuffled) {
+    const wordElem = document.createElement('div');
+    wordElem.textContent = word;
+    wordElem.classList.add('word');
+    wordElem.draggable = true;
+    wordElem.id = 'word-' + word + '-' + Math.random().toString(36).substr(2,5);
+    jumbledWordsDiv.appendChild(wordElem);
+
+    wordElem.addEventListener('dragstart', dragStart);
+    wordElem.addEventListener('dragend', dragEnd);
+  }
+
+  jumbledWordsDiv.addEventListener('dragover', dragOver);
+  jumbledWordsDiv.addEventListener('drop', dropWord);
+  assembledWordsDiv.addEventListener('dragover', dragOver);
+  assembledWordsDiv.addEventListener('drop', dropWord);
+
+  assembledWordsDiv.dataset.correctSentence = words.join(' ');
+
+  startJumbleTimer();
+}
+
+function startJumbleTimer() {
+  clearInterval(jumbleTimerInterval);
+  jumbleTimeLeft = jumbleTimerLimit;
+  jumbleTimerDiv.textContent = `Time left: ${jumbleTimeLeft} seconds`;
+  jumbleTimerInterval = setInterval(() => {
+    jumbleTimeLeft--;
+    jumbleTimerDiv.textContent = `Time left: ${jumbleTimeLeft} seconds`;
+    if (jumbleTimeLeft <= 0) {
+      clearInterval(jumbleTimerInterval);
+      jumbleTimerDiv.textContent = "Time's up!";
+      result.textContent = "Time's up! No mark awarded.";
+      timeLimitExceeded = true;
+      showSentenceBtn.style.display = 'inline-block';
+    }
+  }, 1000);
+}
+
+function dragStart(e) {
+  e.dataTransfer.setData('text/plain', e.target.id);
+  e.target.classList.add('dragging');
+}
+
+function dragEnd(e) {
+  e.target.classList.remove('dragging');
+}
+
+function dragOver(e) {
+  e.preventDefault();
+}
+
+function dropWord(e) {
+  e.preventDefault();
+  const wordId = e.dataTransfer.getData('text/plain');
+  const wordElem = document.getElementById(wordId);
+  if (!wordElem) return;
+
+  e.currentTarget.appendChild(wordElem);
+  checkSentenceCompletion();
+}
+
+function checkSentenceCompletion() {
+  const assembledWords = [...assembledWordsDiv.children].map(w => w.textContent);
+  const correctSentence = assembledWordsDiv.dataset.correctSentence.split(' ');
+  
+  if (assembledWords.length !== correctSentence.length) {
+    return;
+  }
+  
+  let correct = true;
+  for (let i=0; i<correctSentence.length; i++) {
+    if (assembledWords[i] !== correctSentence[i]) {
+      correct = false;
+      break;
+    }
+  }
+  
+  if (correct) {
+    clearInterval(jumbleTimerInterval);
+    jumbleTimerDiv.textContent = '';
+    
+    if (!timeLimitExceeded) {
+      result.textContent = 'Excellent! Correct answer! +1 Mark';
+      totalScore++;
+      levelScore++;
+    } else {
+      result.textContent = 'Correct! But time exceeded. No mark.';
+    }
+    
+    jumbleContentWrapper.classList.add('hidden');
+    nextSentenceBtn.style.display = 'inline-block';
+    showSentenceBtn.style.display = 'inline-block';
+  }
+}
+
+function showScorePage() {
+  scorePageContainer.classList.add('active');
+  sentenceBox.style.display = 'none';
+  spokenSentenceBox.classList.remove('active');
+  jumbleContainer.style.display = 'none';
+  buttons.style.display = 'none';
+  result.textContent = '';
+  
+  levelScoreContent.innerHTML = `
+    <div>Level ${currentLevel + 1} Score</div>
+    <div style="font-size: 32px; margin: 20px 0; font-weight: 900; color: #e74c3c;">${levelScore} / 6</div>
+  `;
+  
+  if (currentLevel < allLevels.length - 1) {
+    continueBtn.style.display = 'inline-block';
+    restartBtn.style.display = 'inline-block';
+  } else {
+    levelScoreContent.innerHTML = `
+      <div style="font-size: 28px; margin: 20px 0;">All Levels Complete!</div>
+      <div style="font-size: 24px; margin: 20px 0;">Total Score: <strong style="color: #e74c3c;">${totalScore} / 18</strong></div>
+    `;
+    continueBtn.style.display = 'none';
+    restartBtn.style.display = 'inline-block';
+  }
+}
+
+speakBtn.onclick = () => {
+  if (!micAllowed || !recognition) {
+    alert('Speech Recognition not initialized. Please refresh the page.');
+    return;
+  }
+  
+  if (recognitionActive) {
+    recognition.stop();
+    recognitionActive = false;
+    speakBtn.textContent = 'Speak';
+    result.textContent = '';
+    return;
+  }
+  
+  try {
+    audioChunks = [];
+    recognition.start();
+  } catch (e) {
+    console.error('Recognition start error:', e);
+    result.textContent = 'Please wait and try again.';
+  }
+};
+
+repeatBtn.onclick = () => {
+  const utterance = new SpeechSynthesisUtterance(currentSentence);
+  utterance.lang = 'en-US';
+  speechSynthesis.speak(utterance);
+};
+
+recallBtn.onclick = () => {
+  showJumbleActivity(currentSentence.split(' '));
+};
+
+retryBtn.onclick = () => {
+  result.textContent = '';
+  spokenSentenceBox.classList.remove('active');
+  retryBtn.style.display = 'none';
+  speakBtn.style.display = 'inline-block';
+  repeatBtn.style.display = 'inline-block';
+};
+
+showSentenceBtn.onclick = () => {
+  sentenceBox.classList.remove('hidden');
+  fadeInSentence(currentSentence);
+  showSentenceBtn.style.display = 'none';
+};
+
+playbackBtn.onclick = () => {
+  if (audioBlob) {
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+  }
+};
+
+nextSentenceBtn.onclick = () => {
+  currentQuestion++;
+  jumbleContainer.style.display = 'none';
+  jumbleContentWrapper.classList.remove('hidden');
+  showSentenceBtn.style.display = 'none';
+  nextSentenceBtn.style.display = 'none';
+  jumbleTimerDiv.textContent = '';
+  result.textContent = '';
+  spokenSentenceBox.classList.remove('active');
+
+  if (currentQuestion >= 3) {
+    showScorePage();
+  } else {
+    showQuestion();
+  }
+};
+
+continueBtn.onclick = () => {
+  currentLevel++;
+  currentQuestion = 0;
+  levelScore = 0;
+  scorePageContainer.classList.remove('active');
+  sentenceBox.style.display = 'flex';
+  buttons.style.display = 'block';
+  speakBtn.style.display = 'inline-block';
+  repeatBtn.style.display = 'inline-block';
+  continueBtn.style.display = 'none';
+  restartBtn.style.display = 'none';
+  
+  showLevel();
+};
+
+restartBtn.onclick = () => {
+  startReadingPractice();
+};
+
+window.onload = () => {
+  startReadingPractice();
+};
+</script>
+</body>
+</html>
