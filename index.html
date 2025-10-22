@@ -22,6 +22,11 @@
     color: #27ae60;
     margin-bottom: 10px;
   }
+  #jumbleContainer {
+    display: none;
+    width: 100%;
+    order: -1;
+  }
   #sentenceBox {
     border: 3px solid #6ab04c;
     background: #d4efdf;
@@ -160,12 +165,6 @@
     margin-bottom: 10px;
     color: #2c3e50;
   }
-  #jumbleContainer {
-    display: none;
-    margin-top: 20px;
-    text-align: center;
-    width: 100%;
-  }
   #instructions {
     font-size: 16px;
     color: #34495e;
@@ -261,54 +260,62 @@
     color: #e74c3c;
     margin-top: 10px;
   }
+  .main-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
 </style>
 </head>
 <body>
 
 <h1>Reading Practice with Jumbled Words</h1>
 
-<div id="levelDisplay"></div>
+<div class="main-wrapper">
+  <div id="levelDisplay"></div>
 
-<div id="sentenceBox"></div>
-
-<div id="spokenSentenceBox">
-  <div>You said: <strong id="spokenText"></strong></div>
-  <div id="playbackContainer">
-    <button class="playback-button" id="playbackBtn" title="Play Recording" disabled>▶</button>
+  <div id="jumbleContainer">
+    <div id="jumbleContentWrapper">
+      <div id="instructions">Click on words to arrange them in the correct order!</div>
+      <div class="container-label">Jumbled Words:</div>
+      <div id="jumbledWords"></div>
+      <div class="container-label">Your Answer:</div>
+      <div id="assembledWords"></div>
+      <div id="jumbleTimer"></div>
+    </div>
   </div>
-</div>
 
-<div id="scorePageContainer">
-  <div class="score-title">Level Complete!</div>
-  <div class="score-content" id="levelScoreContent"></div>
-  <button id="continueBtn">Continue to Next Level</button>
-  <button id="restartBtn">Restart</button>
-</div>
+  <div id="sentenceBox"></div>
 
-<div id="buttons">
-  <button id="repeatBtn">Repeat After Me</button>
-  <button id="speakBtn">Speak</button>
-  <button id="recallBtn">Recall It</button>
-  <button id="retryBtn">Retry</button>
-  <button id="showSentenceBtn">Show Sentence</button>
-  <button id="nextSentenceBtn">Next Question</button>
-</div>
-
-<div id="result"></div>
-
-<div id="jumbleContainer">
-  <div id="jumbleContentWrapper">
-    <div id="instructions">Click on words to arrange them in the correct order!</div>
-    <div class="container-label">Jumbled Words:</div>
-    <div id="jumbledWords"></div>
-    <div class="container-label">Your Answer:</div>
-    <div id="assembledWords"></div>
-    <div id="jumbleTimer"></div>
+  <div id="spokenSentenceBox">
+    <div>You said: <strong id="spokenText"></strong></div>
+    <div id="playbackContainer">
+      <button class="playback-button" id="playbackBtn" title="Play Recording" disabled>▶</button>
+    </div>
   </div>
-</div>
 
-<div id="correctSentenceBox">
-  <strong id="correctSentenceText"></strong>
+  <div id="correctSentenceBox">
+    <strong id="correctSentenceText"></strong>
+  </div>
+
+  <div id="scorePageContainer">
+    <div class="score-title">Level Complete!</div>
+    <div class="score-content" id="levelScoreContent"></div>
+    <button id="continueBtn">Continue to Next Level</button>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <div id="buttons">
+    <button id="repeatBtn">Repeat After Me</button>
+    <button id="speakBtn">Speak</button>
+    <button id="recallBtn">Recall It</button>
+    <button id="retryBtn">Retry</button>
+    <button id="showSentenceBtn">Show Sentence</button>
+    <button id="nextSentenceBtn">Next Question</button>
+  </div>
+
+  <div id="result"></div>
 </div>
 
 <script>
@@ -640,6 +647,9 @@ function showJumbleActivity(words) {
   assembledWordsDiv.dataset.correctSentence = words.join(' ');
 
   startJumbleTimer();
+  
+  // Scroll to top of page
+  window.scrollTo(0, 0);
 }
 
 function moveWord(wordElem) {
@@ -666,6 +676,7 @@ function startJumbleTimer() {
       result.textContent = "Time's up! No mark awarded.";
       timeLimitExceeded = true;
       showSentenceBtn.style.display = 'inline-block';
+      nextSentenceBtn.style.display = 'none';
     }
   }, 1000);
 }
@@ -702,6 +713,7 @@ function checkSentenceCompletion() {
     correctSentenceBox.classList.add('active');
     correctSentenceText.textContent = currentSentence;
     nextSentenceBtn.style.display = 'inline-block';
+    showSentenceBtn.style.display = 'none';
   }
 }
 
@@ -780,6 +792,7 @@ showSentenceBtn.onclick = () => {
   sentenceBox.classList.remove('hidden');
   fadeInSentence(currentSentence);
   showSentenceBtn.style.display = 'none';
+  nextSentenceBtn.style.display = 'inline-block';
 };
 
 playbackBtn.onclick = () => {
