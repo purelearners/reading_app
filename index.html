@@ -750,12 +750,14 @@ function initializeSpeechRecognition() {
   recog.maxAlternatives = 1;
 
   recog.onstart = () => {
-    console.log('Recognition started');
+    console.log('Recognition started - listening for speech');
+    result.textContent = '🎤 Listening to your speech...';
   };
 
   recog.onresult = event => {
     const spoken = event.results[0][0].transcript;
     console.log('Speech recognized:', spoken);
+    result.textContent = '';
 
     spokenSentenceBox.classList.add('active');
     spokenText.textContent = spoken;
@@ -1075,32 +1077,84 @@ stopRecordBtn.onclick = () => {
     }
   }
   
-  // AUTOMATIC SPEECH ANALYSIS - Start recognition immediately after stop
+  // AUTOMATIC SPEECH ANALYSIS - FIXED VERSION
   if (!recognition) {
     result.textContent = '⚠️ Speech Recognition not available.';
+    console.error('Recognition object is null');
     return;
   }
   
-  setTimeout(() => {
-    try {
-      recognition.start();
-      console.log('Recognition started for analysis');
-    } catch (e) {
-      console.error('Start error:', e.message);
-      if (e.message.includes('already started')) {
-        recognition.abort();
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e2) {
-            result.textContent = '⚠️ Please try again.';
-          }
-        }, 100);
+  // Create new recognition for analysis to avoid state issues
+  const analyzeRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  analyzeRecognition.lang = 'en-US';
+  analyzeRecognition.continuous = false;
+  analyzeRecognition.interimResults = false;
+  analyzeRecognition.maxAlternatives = 1;
+  
+  analyzeRecognition.onstart = () => {
+    console.log('Analysis recognition started');
+  };
+  
+  analyzeRecognition.onresult = event => {
+    if (event.results && event.results.length > 0) {
+      const spoken = event.results[0][0].transcript;
+      console.log('Analysis result:', spoken);
+      result.textContent = '';
+
+      spokenSentenceBox.classList.add('active');
+      spokenText.textContent = spoken;
+      
+      if (speechMatches(spoken, currentSentence)) {
+        result.textContent = '✅ Correct!';
+        totalScore++;
+        levelScore++;
+        startRecordBtn.style.display = 'none';
+        stopRecordBtn.style.display = 'none';
+        recallBtn.style.display = 'inline-block';
+        retryBtn.style.display = 'none';
+        speechAttemptCount = 0;
       } else {
-        result.textContent = '⚠️ Please wait and try again.';
+        speechAttemptCount++;
+        result.textContent = `❌ Incorrect. Try again! (Attempt ${speechAttemptCount}/5)`;
+        retryBtn.style.display = 'inline-block';
+        startRecordBtn.style.display = 'none';
+        stopRecordBtn.style.display = 'none';
+        
+        if (speechAttemptCount >= 5) {
+          recallBtn.style.display = 'inline-block';
+          result.textContent = '💡 Having trouble? Try arranging the words!';
+        } else {
+          recallBtn.style.display = 'none';
+        }
       }
     }
-  }, 300);
+  };
+  
+  analyzeRecognition.onerror = event => {
+    console.error('Analysis recognition error:', event.error);
+    if (event.error === 'no-speech') {
+      result.textContent = '⚠️ No speech detected. Try again!';
+    } else if (event.error === 'network') {
+      result.textContent = '⚠️ Network error. Check your connection.';
+    } else {
+      result.textContent = '❌ Error: ' + event.error;
+    }
+  };
+  
+  analyzeRecognition.onend = () => {
+    console.log('Analysis recognition ended');
+  };
+  
+  // Start the analysis with small delay
+  setTimeout(() => {
+    try {
+      analyzeRecognition.start();
+      console.log('Analysis started');
+    } catch (e) {
+      console.error('Start analysis error:', e.message);
+      result.textContent = '⚠️ Please try again.';
+    }
+  }, 500);
 };
 
 repeatBtn.onclick = () => {
