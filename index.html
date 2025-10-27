@@ -44,7 +44,6 @@
     max-width: 800px;
   }
   
-  /* Jumble Container - Positioned at Top */
   #jumbleContainer {
     display: none;
     width: 100%;
@@ -122,7 +121,6 @@
     text-align: center;
   }
   
-  /* Sentence Box */
   #sentenceBox {
     border: 3px solid #6ab04c;
     background: #d4efdf;
@@ -152,7 +150,6 @@
     display: none;
   }
   
-  /* Spoken Sentence Box */
   #spokenSentenceBox {
     border: 3px solid #3498db;
     background: #d6eaf8;
@@ -210,7 +207,30 @@
     opacity: 0.6;
   }
   
-  /* Correct Sentence Display */
+  #recordingIndicator {
+    display: none;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #e74c3c;
+    margin: 15px 0;
+  }
+  
+  .recording-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: #e74c3c;
+    border-radius: 50%;
+    margin: 0 8px;
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  
   #correctSentenceBox {
     border: 3px solid #27ae60;
     background: #d5f4e6;
@@ -239,7 +259,6 @@
     to { opacity: 1; transform: translateY(0); }
   }
   
-  /* Buttons */
   #buttons {
     display: flex;
     flex-wrap: wrap;
@@ -278,7 +297,7 @@
     opacity: 0.6;
   }
   
-  #recallBtn, #showSentenceBtn, #nextSentenceBtn, #continueBtn, #restartBtn, #retryBtn {
+  #recallBtn, #showSentenceBtn, #nextSentenceBtn, #continueBtn, #restartBtn, #retryBtn, #startRecordBtn, #stopRecordBtn, #analyzeBtn {
     display: none;
     background: #3498db;
     box-shadow: 0 4px 6px rgba(52,152,219,0.4);
@@ -289,11 +308,13 @@
   #nextSentenceBtn:hover:not(:disabled), 
   #continueBtn:hover:not(:disabled), 
   #restartBtn:hover:not(:disabled), 
-  #retryBtn:hover:not(:disabled) {
+  #retryBtn:hover:not(:disabled),
+  #startRecordBtn:hover:not(:disabled),
+  #stopRecordBtn:hover:not(:disabled),
+  #analyzeBtn:hover:not(:disabled) {
     background: #2980b9;
   }
   
-  /* Result/Feedback */
   #result {
     font-size: 20px;
     font-weight: 700;
@@ -303,7 +324,24 @@
     text-align: center;
   }
   
-  /* Score Page */
+  #supportNotice {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    color: #856404;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 800px;
+    display: none;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  #supportNotice.show {
+    display: block;
+  }
+  
   #scorePageContainer {
     display: none;
     text-align: center;
@@ -340,7 +378,6 @@
     margin: 20px 0;
   }
   
-  /* Responsive Design */
   @media (max-width: 768px) {
     h1 {
       font-size: 24px;
@@ -368,9 +405,9 @@
 <h1>🎓 Reading Practice with Jumbled Words</h1>
 
 <div class="main-wrapper">
+  <div id="supportNotice"></div>
   <div id="levelDisplay"></div>
 
-  <!-- Jumble Container at Top -->
   <div id="jumbleContainer">
     <div id="instructions">👆 Click on words to arrange them in the correct order!</div>
     <div class="container-label">Jumbled Words:</div>
@@ -380,10 +417,12 @@
     <div id="jumbleTimer"></div>
   </div>
 
-  <!-- Sentence Display -->
   <div id="sentenceBox"></div>
 
-  <!-- Spoken Sentence with Playback -->
+  <div id="recordingIndicator">
+    <span class="recording-dot"></span>Recording...<span class="recording-dot"></span>
+  </div>
+
   <div id="spokenSentenceBox">
     <div>You said: <strong id="spokenText"></strong></div>
     <div id="playbackContainer">
@@ -391,13 +430,11 @@
     </div>
   </div>
 
-  <!-- Correct Sentence Display -->
   <div id="correctSentenceBox">
     <div>✅ Correct Sentence:</div>
     <strong id="correctSentenceText"></strong>
   </div>
 
-  <!-- Score Page -->
   <div id="scorePageContainer">
     <div class="score-title">🎉 Level Complete!</div>
     <div class="score-content" id="levelScoreContent"></div>
@@ -405,21 +442,67 @@
     <button id="restartBtn">Restart</button>
   </div>
 
-  <!-- Control Buttons -->
   <div id="buttons">
     <button id="repeatBtn">🔊 Repeat Sentence</button>
-    <button id="speakBtn">🎤 Speak</button>
+    <button id="startRecordBtn">🎙️ Start Recording</button>
+    <button id="stopRecordBtn">⏹️ Stop Recording</button>
+    <button id="analyzeBtn">🔍 Analyze Speech</button>
     <button id="recallBtn">🔄 Try Arranging Words</button>
-    <button id="retryBtn">🔁 Retry Speech</button>
+    <button id="retryBtn">🔁 Retry Recording</button>
     <button id="showSentenceBtn">👁️ Show Sentence</button>
     <button id="nextSentenceBtn">➡️ Next Question</button>
   </div>
 
-  <!-- Feedback -->
   <div id="result"></div>
 </div>
 
 <script>
+// ============================================
+// DEVICE DETECTION
+// ============================================
+function detectDevice() {
+  const ua = navigator.userAgent;
+  return {
+    isAndroid: /Android/.test(ua),
+    isIOS: /iPhone|iPad|iPod/.test(ua),
+    isChrome: /Chrome/.test(ua),
+    isFirefox: /Firefox/.test(ua),
+    isSafari: /Safari/.test(ua) && !/Chrome/.test(ua)
+  };
+}
+
+// ============================================
+// BROWSER SUPPORT CHECK
+// ============================================
+function checkBrowserSupport() {
+  const device = detectDevice();
+  const supportNotice = document.getElementById('supportNotice');
+  let message = '';
+  let showNotice = false;
+
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    message = '⚠️ WARNING: Microphone access requires HTTPS. Please use HTTPS URL for full functionality.';
+    showNotice = true;
+  }
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    message = '⚠️ WARNING: Speech Recognition not supported. Please use Chrome, Edge, or Safari.';
+    showNotice = true;
+  }
+
+  if (device.isAndroid && device.isFirefox) {
+    message = '⚠️ WARNING: Speech Recognition not supported on Firefox for Android. Please use Chrome.';
+    showNotice = true;
+  }
+
+  if (showNotice) {
+    supportNotice.textContent = message;
+    supportNotice.classList.add('show');
+  }
+
+  return true;
+}
+
 // ============================================
 // SENTENCE DATA
 // ============================================
@@ -483,7 +566,6 @@ const level3Science = [
   "Blood circulation transports oxygen nutrients and waste products throughout body"
 ];
 
-// Homophone groups for intelligent matching
 const homophoneGroups = [
   ["to","too","two"], ["hear","here"], ["sea","see"], ["right","write"],
   ["flower","flour"], ["one","won"], ["bare","bear"], ["break","brake"],
@@ -510,16 +592,18 @@ let levelScore = 0;
 let totalScore = 0;
 let currentSentence = '';
 let levelSentences = [];
-let speechAttemptCount = 0; // Track failed speech attempts
+let speechAttemptCount = 0;
 let jumbleTimerInterval;
 let jumbleTimeLeft = 10;
 let timeLimitExceeded = false;
 let recognition;
 let mediaRecorder;
+let mediaRecorderReady = false;
 let audioChunks = [];
 let audioBlob;
 let micAllowed = false;
-let recognitionActive = false;
+let isRecording = false;
+let deviceInfo = detectDevice();
 
 // ============================================
 // DOM ELEMENTS
@@ -532,13 +616,16 @@ const playbackBtn = document.getElementById('playbackBtn');
 const result = document.getElementById('result');
 const jumbleTimerDiv = document.getElementById('jumbleTimer');
 const repeatBtn = document.getElementById('repeatBtn');
-const speakBtn = document.getElementById('speakBtn');
+const startRecordBtn = document.getElementById('startRecordBtn');
+const stopRecordBtn = document.getElementById('stopRecordBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
 const recallBtn = document.getElementById('recallBtn');
 const retryBtn = document.getElementById('retryBtn');
 const showSentenceBtn = document.getElementById('showSentenceBtn');
 const nextSentenceBtn = document.getElementById('nextSentenceBtn');
 const continueBtn = document.getElementById('continueBtn');
 const restartBtn = document.getElementById('restartBtn');
+const recordingIndicator = document.getElementById('recordingIndicator');
 const jumbleContainer = document.getElementById('jumbleContainer');
 const jumbledWordsDiv = document.getElementById('jumbledWords');
 const assembledWordsDiv = document.getElementById('assembledWords');
@@ -551,15 +638,12 @@ const buttons = document.getElementById('buttons');
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-// Check if two words are homophones
 function areHomophones(w1, w2) {
   w1 = w1.toLowerCase();
   w2 = w2.toLowerCase();
   return homophoneGroups.some(group => group.includes(w1) && group.includes(w2));
 }
 
-// Check if spoken sentence matches expected with homophone tolerance
 function speechMatches(spoken, expected) {
   const spokenWords = spoken.toLowerCase().replace(/[.,!?]/g, '').trim().split(/\s+/);
   const expectedWords = expected.toLowerCase().replace(/[.,!?]/g, '').trim().split(/\s+/);
@@ -574,11 +658,9 @@ function speechMatches(spoken, expected) {
   return true;
 }
 
-// Get random unique sentences for a level
 function getRandomSentences(level, count) {
   const levelData = allLevels[level];
   
-  // Reset if all sentences used
   if (levelData.usedIndices.length >= levelData.sentences.length) {
     levelData.usedIndices = [];
   }
@@ -603,7 +685,6 @@ function getRandomSentences(level, count) {
   return sentences;
 }
 
-// Animate sentence display
 function fadeInSentence(text) {
   sentenceBox.classList.remove('active', 'hidden');
   setTimeout(() => {
@@ -618,25 +699,39 @@ function hideSentence() {
 }
 
 // ============================================
-// MEDIA RECORDER SETUP
+// ENHANCED MEDIARECORDER SETUP
 // ============================================
 function setupMediaRecorder() {
+  if (!('MediaRecorder' in window)) {
+    mediaRecorderReady = false;
+    console.log('MediaRecorder not supported');
+    return Promise.resolve();
+  }
+  
   return navigator.mediaDevices.getUserMedia({ audio: true })
     .then(stream => {
       mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderReady = true;
+      console.log('MediaRecorder initialized');
       
       mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
       };
       
       mediaRecorder.onstop = () => {
-        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        playbackBtn.disabled = false;
+        if (audioChunks.length > 0) {
+          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          playbackBtn.disabled = false;
+          console.log('Audio blob created:', audioBlob.size, 'bytes');
+        }
       };
     })
     .catch(err => {
-      console.error('Microphone access error:', err);
-      alert('⚠️ Microphone access denied. Please allow microphone permissions to use speech features.');
+      mediaRecorderReady = false;
+      playbackBtn.disabled = true;
+      console.warn('MediaRecorder unavailable:', err.message);
     });
 }
 
@@ -645,38 +740,25 @@ function setupMediaRecorder() {
 // ============================================
 function initializeSpeechRecognition() {
   if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-    alert('⚠️ Speech Recognition not supported in this browser. Please use Chrome or Edge.');
+    console.error('Speech Recognition not supported');
     return null;
   }
   
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recog = new SpeechRecognition();
+  
   recog.lang = 'en-US';
+  recog.continuous = false;
   recog.interimResults = false;
   recog.maxAlternatives = 1;
-  recog.continuous = false;
 
   recog.onstart = () => {
-    recognitionActive = true;
-    speakBtn.textContent = '⏹️ Stop Listening';
-    result.textContent = '🎤 Listening...';
-    audioChunks = [];
-    playbackBtn.disabled = true;
-    
-    if (mediaRecorder && mediaRecorder.state === 'inactive') {
-      mediaRecorder.start();
-    }
+    console.log('Recognition started');
   };
 
   recog.onresult = event => {
-    recognitionActive = false;
-    speakBtn.textContent = '🎤 Speak';
-
     const spoken = event.results[0][0].transcript;
-
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-    }
+    console.log('Speech recognized:', spoken);
 
     spokenSentenceBox.classList.add('active');
     spokenText.textContent = spoken;
@@ -685,19 +767,20 @@ function initializeSpeechRecognition() {
       result.textContent = '✅ Correct!';
       totalScore++;
       levelScore++;
-      speakBtn.style.display = 'none';
-      repeatBtn.style.display = 'none';
+      startRecordBtn.style.display = 'none';
+      stopRecordBtn.style.display = 'none';
+      analyzeBtn.style.display = 'none';
       recallBtn.style.display = 'inline-block';
       retryBtn.style.display = 'none';
-      speechAttemptCount = 0; // Reset counter on success
+      speechAttemptCount = 0;
     } else {
-      speechAttemptCount++; // Increment failed attempts
+      speechAttemptCount++;
       result.textContent = `❌ Incorrect. Try again! (Attempt ${speechAttemptCount}/5)`;
       retryBtn.style.display = 'inline-block';
-      speakBtn.style.display = 'none';
-      repeatBtn.style.display = 'none';
+      startRecordBtn.style.display = 'none';
+      stopRecordBtn.style.display = 'none';
+      analyzeBtn.style.display = 'none';
       
-      // Show "Try Arranging Words" after 5 failed attempts
       if (speechAttemptCount >= 5) {
         recallBtn.style.display = 'inline-block';
         result.textContent = '💡 Having trouble? Try arranging the words!';
@@ -708,31 +791,21 @@ function initializeSpeechRecognition() {
   };
 
   recog.onerror = event => {
-    recognitionActive = false;
-    speakBtn.textContent = '🎤 Speak';
-    
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-    }
-    
-    console.error('Speech Recognition error:', event.error);
+    console.error('Recognition error:', event.error);
     if (event.error === 'no-speech') {
       result.textContent = '⚠️ No speech detected. Try again!';
     } else if (event.error === 'not-allowed') {
-      alert('⚠️ Microphone permission denied. Please allow microphone access.');
-      speakBtn.disabled = true;
+      alert('⚠️ Microphone permission denied.');
+      startRecordBtn.disabled = true;
+    } else if (event.error === 'network') {
+      result.textContent = '⚠️ Network error. Check your connection.';
     } else {
       result.textContent = '❌ Error: ' + event.error;
     }
   };
 
   recog.onend = () => {
-    recognitionActive = false;
-    speakBtn.textContent = '🎤 Speak';
-    
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-    }
+    console.log('Recognition ended');
   };
 
   return recog;
@@ -844,28 +917,32 @@ function checkSentenceCompletion() {
 // GAME FLOW FUNCTIONS
 // ============================================
 function startReadingPractice() {
+  checkBrowserSupport();
+
   jumbleContainer.style.display = 'none';
   correctSentenceBox.classList.remove('active');
   scorePageContainer.classList.remove('active');
   buttons.style.display = 'flex';
   sentenceBox.style.display = 'flex';
   spokenSentenceBox.classList.remove('active');
+  recordingIndicator.style.display = 'none';
   result.textContent = '';
   currentLevel = 0;
   currentQuestion = 0;
   levelScore = 0;
   totalScore = 0;
   speechAttemptCount = 0;
-  speakBtn.disabled = false;
+  startRecordBtn.disabled = false;
   repeatBtn.disabled = false;
-  speakBtn.textContent = '🎤 Speak';
   recallBtn.style.display = 'none';
   retryBtn.style.display = 'none';
   showSentenceBtn.style.display = 'none';
   nextSentenceBtn.style.display = 'none';
   continueBtn.style.display = 'none';
   restartBtn.style.display = 'none';
-  speakBtn.style.display = 'inline-block';
+  startRecordBtn.style.display = 'inline-block';
+  stopRecordBtn.style.display = 'none';
+  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   playbackBtn.disabled = true;
 
@@ -876,9 +953,17 @@ function startReadingPractice() {
         micAllowed = true;
         showLevel();
       } else {
-        speakBtn.disabled = true;
+        startRecordBtn.disabled = true;
+        alert('⚠️ Speech Recognition not available.');
         showLevel();
       }
+    }).catch(err => {
+      console.warn('Setup error:', err);
+      recognition = initializeSpeechRecognition();
+      if (recognition) {
+        micAllowed = true;
+      }
+      showLevel();
     });
   } else {
     showLevel();
@@ -904,19 +989,22 @@ function showQuestion() {
   fadeInSentence(currentSentence);
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
+  recordingIndicator.style.display = 'none';
   jumbleContainer.style.display = 'none';
   correctSentenceBox.classList.remove('active');
-  speakBtn.disabled = false;
+  startRecordBtn.disabled = false;
   repeatBtn.disabled = false;
-  speakBtn.textContent = '🎤 Speak';
   recallBtn.style.display = 'none';
   retryBtn.style.display = 'none';
   showSentenceBtn.style.display = 'none';
   nextSentenceBtn.style.display = 'none';
-  speakBtn.style.display = 'inline-block';
+  startRecordBtn.style.display = 'inline-block';
+  stopRecordBtn.style.display = 'none';
+  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   playbackBtn.disabled = true;
   speechAttemptCount = 0;
+  isRecording = false;
 }
 
 function showScorePage() {
@@ -926,6 +1014,7 @@ function showScorePage() {
   jumbleContainer.style.display = 'none';
   correctSentenceBox.classList.remove('active');
   buttons.style.display = 'none';
+  recordingIndicator.style.display = 'none';
   result.textContent = '';
   
   levelScoreContent.innerHTML = `
@@ -949,29 +1038,85 @@ function showScorePage() {
 // ============================================
 // EVENT HANDLERS
 // ============================================
-speakBtn.onclick = () => {
+startRecordBtn.onclick = () => {
   if (!micAllowed || !recognition) {
-    alert('⚠️ Speech Recognition not initialized. Please refresh the page.');
+    alert('⚠️ Speech Recognition not initialized. Refresh page.');
     return;
   }
   
-  if (recognitionActive) {
-    recognition.stop();
-    recognitionActive = false;
-    speakBtn.textContent = '🎤 Speak';
-    result.textContent = '';
-    spokenSentenceBox.classList.remove('active');
-    playbackBtn.disabled = true;
+  isRecording = true;
+  audioChunks = [];
+  audioBlob = null;
+  playbackBtn.disabled = true;
+  result.textContent = '';
+  spokenSentenceBox.classList.remove('active');
+  recordingIndicator.style.display = 'block';
+  startRecordBtn.style.display = 'none';
+  stopRecordBtn.style.display = 'inline-block';
+  analyzeBtn.style.display = 'none';
+  
+  if (mediaRecorderReady && mediaRecorder && mediaRecorder.state === 'inactive') {
+    try {
+      mediaRecorder.start();
+      console.log('MediaRecorder started');
+    } catch (e) {
+      console.warn('Could not start MediaRecorder:', e.message);
+    }
+  }
+};
+
+stopRecordBtn.onclick = () => {
+  if (!isRecording) return;
+  
+  isRecording = false;
+  recordingIndicator.style.display = 'none';
+  startRecordBtn.style.display = 'none';
+  stopRecordBtn.style.display = 'none';
+  analyzeBtn.style.display = 'inline-block';
+  result.textContent = '📍 Recording stopped. Click Analyze Speech to process.';
+  
+  if (mediaRecorderReady && mediaRecorder && mediaRecorder.state === 'recording') {
+    try {
+      mediaRecorder.stop();
+      console.log('MediaRecorder stopped');
+    } catch (e) {
+      console.warn('Could not stop MediaRecorder:', e.message);
+    }
+  }
+};
+
+analyzeBtn.onclick = () => {
+  result.textContent = '🔍 Analyzing speech...';
+  analyzeBtn.disabled = true;
+  
+  if (!recognition) {
+    result.textContent = '⚠️ Speech Recognition not available.';
     return;
   }
   
   try {
     recognition.start();
-    playbackBtn.disabled = true;
   } catch (e) {
-    console.error('Recognition start error:', e);
-    result.textContent = '⚠️ Please wait and try again.';
+    console.error('Start error:', e.message);
+    if (e.message.includes('already started')) {
+      recognition.abort();
+      setTimeout(() => {
+        try {
+          recognition.start();
+        } catch (e2) {
+          result.textContent = '⚠️ Please try again.';
+          analyzeBtn.disabled = false;
+        }
+      }, 100);
+    } else {
+      result.textContent = '⚠️ Please wait and try again.';
+      analyzeBtn.disabled = false;
+    }
   }
+  
+  setTimeout(() => {
+    analyzeBtn.disabled = false;
+  }, 2000);
 };
 
 repeatBtn.onclick = () => {
@@ -987,10 +1132,14 @@ recallBtn.onclick = () => {
 retryBtn.onclick = () => {
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
+  recordingIndicator.style.display = 'none';
   retryBtn.style.display = 'none';
   playbackBtn.disabled = true;
-  speakBtn.style.display = 'inline-block';
+  startRecordBtn.style.display = 'inline-block';
+  stopRecordBtn.style.display = 'none';
+  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
+  isRecording = false;
 };
 
 showSentenceBtn.onclick = () => {
@@ -1005,8 +1154,8 @@ playbackBtn.onclick = () => {
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
     audio.play().catch(err => {
-      console.error('Error playing audio:', err);
-      alert('⚠️ Could not play audio. Please try again.');
+      console.error('Playback error:', err);
+      alert('⚠️ Could not play audio.');
     });
   } else {
     alert('⚠️ No audio recording available.');
@@ -1022,6 +1171,7 @@ nextSentenceBtn.onclick = () => {
   jumbleTimerDiv.textContent = '';
   result.textContent = '';
   spokenSentenceBox.classList.remove('active');
+  recordingIndicator.style.display = 'none';
   playbackBtn.disabled = true;
 
   if (currentQuestion >= 3) {
@@ -1038,10 +1188,13 @@ continueBtn.onclick = () => {
   scorePageContainer.classList.remove('active');
   sentenceBox.style.display = 'flex';
   buttons.style.display = 'flex';
-  speakBtn.style.display = 'inline-block';
+  startRecordBtn.style.display = 'inline-block';
+  stopRecordBtn.style.display = 'none';
+  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   continueBtn.style.display = 'none';
   restartBtn.style.display = 'none';
+  recordingIndicator.style.display = 'none';
   
   showLevel();
 };
