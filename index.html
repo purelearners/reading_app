@@ -297,7 +297,7 @@
     opacity: 0.6;
   }
   
-  #recallBtn, #showSentenceBtn, #nextSentenceBtn, #continueBtn, #restartBtn, #retryBtn, #startRecordBtn, #stopRecordBtn, #analyzeBtn {
+  #recallBtn, #showSentenceBtn, #nextSentenceBtn, #continueBtn, #restartBtn, #retryBtn, #startRecordBtn, #stopRecordBtn {
     display: none;
     background: #3498db;
     box-shadow: 0 4px 6px rgba(52,152,219,0.4);
@@ -310,8 +310,7 @@
   #restartBtn:hover:not(:disabled), 
   #retryBtn:hover:not(:disabled),
   #startRecordBtn:hover:not(:disabled),
-  #stopRecordBtn:hover:not(:disabled),
-  #analyzeBtn:hover:not(:disabled) {
+  #stopRecordBtn:hover:not(:disabled) {
     background: #2980b9;
   }
   
@@ -446,7 +445,6 @@
     <button id="repeatBtn">🔊 Repeat Sentence</button>
     <button id="startRecordBtn">🎙️ Start Recording</button>
     <button id="stopRecordBtn">⏹️ Stop Recording</button>
-    <button id="analyzeBtn">🔍 Analyze Speech</button>
     <button id="recallBtn">🔄 Try Arranging Words</button>
     <button id="retryBtn">🔁 Retry Recording</button>
     <button id="showSentenceBtn">👁️ Show Sentence</button>
@@ -618,7 +616,6 @@ const jumbleTimerDiv = document.getElementById('jumbleTimer');
 const repeatBtn = document.getElementById('repeatBtn');
 const startRecordBtn = document.getElementById('startRecordBtn');
 const stopRecordBtn = document.getElementById('stopRecordBtn');
-const analyzeBtn = document.getElementById('analyzeBtn');
 const recallBtn = document.getElementById('recallBtn');
 const retryBtn = document.getElementById('retryBtn');
 const showSentenceBtn = document.getElementById('showSentenceBtn');
@@ -769,7 +766,6 @@ function initializeSpeechRecognition() {
       levelScore++;
       startRecordBtn.style.display = 'none';
       stopRecordBtn.style.display = 'none';
-      analyzeBtn.style.display = 'none';
       recallBtn.style.display = 'inline-block';
       retryBtn.style.display = 'none';
       speechAttemptCount = 0;
@@ -779,7 +775,6 @@ function initializeSpeechRecognition() {
       retryBtn.style.display = 'inline-block';
       startRecordBtn.style.display = 'none';
       stopRecordBtn.style.display = 'none';
-      analyzeBtn.style.display = 'none';
       
       if (speechAttemptCount >= 5) {
         recallBtn.style.display = 'inline-block';
@@ -942,7 +937,6 @@ function startReadingPractice() {
   restartBtn.style.display = 'none';
   startRecordBtn.style.display = 'inline-block';
   stopRecordBtn.style.display = 'none';
-  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   playbackBtn.disabled = true;
 
@@ -1000,7 +994,6 @@ function showQuestion() {
   nextSentenceBtn.style.display = 'none';
   startRecordBtn.style.display = 'inline-block';
   stopRecordBtn.style.display = 'none';
-  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   playbackBtn.disabled = true;
   speechAttemptCount = 0;
@@ -1053,7 +1046,6 @@ startRecordBtn.onclick = () => {
   recordingIndicator.style.display = 'block';
   startRecordBtn.style.display = 'none';
   stopRecordBtn.style.display = 'inline-block';
-  analyzeBtn.style.display = 'none';
   
   if (mediaRecorderReady && mediaRecorder && mediaRecorder.state === 'inactive') {
     try {
@@ -1072,8 +1064,7 @@ stopRecordBtn.onclick = () => {
   recordingIndicator.style.display = 'none';
   startRecordBtn.style.display = 'none';
   stopRecordBtn.style.display = 'none';
-  analyzeBtn.style.display = 'inline-block';
-  result.textContent = '📍 Recording stopped. Click Analyze Speech to process.';
+  result.textContent = '🔍 Analyzing speech...';
   
   if (mediaRecorderReady && mediaRecorder && mediaRecorder.state === 'recording') {
     try {
@@ -1083,40 +1074,33 @@ stopRecordBtn.onclick = () => {
       console.warn('Could not stop MediaRecorder:', e.message);
     }
   }
-};
-
-analyzeBtn.onclick = () => {
-  result.textContent = '🔍 Analyzing speech...';
-  analyzeBtn.disabled = true;
   
+  // AUTOMATIC SPEECH ANALYSIS - Start recognition immediately after stop
   if (!recognition) {
     result.textContent = '⚠️ Speech Recognition not available.';
     return;
   }
   
-  try {
-    recognition.start();
-  } catch (e) {
-    console.error('Start error:', e.message);
-    if (e.message.includes('already started')) {
-      recognition.abort();
-      setTimeout(() => {
-        try {
-          recognition.start();
-        } catch (e2) {
-          result.textContent = '⚠️ Please try again.';
-          analyzeBtn.disabled = false;
-        }
-      }, 100);
-    } else {
-      result.textContent = '⚠️ Please wait and try again.';
-      analyzeBtn.disabled = false;
-    }
-  }
-  
   setTimeout(() => {
-    analyzeBtn.disabled = false;
-  }, 2000);
+    try {
+      recognition.start();
+      console.log('Recognition started for analysis');
+    } catch (e) {
+      console.error('Start error:', e.message);
+      if (e.message.includes('already started')) {
+        recognition.abort();
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (e2) {
+            result.textContent = '⚠️ Please try again.';
+          }
+        }, 100);
+      } else {
+        result.textContent = '⚠️ Please wait and try again.';
+      }
+    }
+  }, 300);
 };
 
 repeatBtn.onclick = () => {
@@ -1137,7 +1121,6 @@ retryBtn.onclick = () => {
   playbackBtn.disabled = true;
   startRecordBtn.style.display = 'inline-block';
   stopRecordBtn.style.display = 'none';
-  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   isRecording = false;
 };
@@ -1190,7 +1173,6 @@ continueBtn.onclick = () => {
   buttons.style.display = 'flex';
   startRecordBtn.style.display = 'inline-block';
   stopRecordBtn.style.display = 'none';
-  analyzeBtn.style.display = 'none';
   repeatBtn.style.display = 'inline-block';
   continueBtn.style.display = 'none';
   restartBtn.style.display = 'none';
